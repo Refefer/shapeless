@@ -1147,36 +1147,30 @@ object Selector {
  * 
  * @author Alois Cochard
  */
-trait Filter[L <: HList, U] {
-  type Out <: HList
-  def apply(l : L) : Out
-}
+trait Filter[L <: HList, U] extends DepFn1[L] { type Out <: HList }
 
 object Filter {
-  implicit def hlistFilter[L <: HList, U, Out0 <: HList](implicit aux : FilterAux[L, U, Out0]) = new Filter[L, U] {
-    type Out = Out0
-    def apply(l : L) : Out0 = aux(l)
-  }
-}
+  type Aux[L <: HList, U, Out0 <: HList] = Filter[L, U] { type Out = Out0 }
 
-trait FilterAux[L <: HList, U, Out <: HList] {
-  def apply(l : L) : Out
-}
-
-object FilterAux {
-  implicit def hlistFilterHNil[L <: HList, U] = new FilterAux[HNil, U, HNil] {
-     def apply(l : HNil) : HNil = HNil
-  }
-
-  implicit def hlistFilter1[L <: HList, H, Out <: HList]
-    (implicit aux : FilterAux[L, H, Out]) = new FilterAux[H :: L, H, H :: Out] {
-       def apply(l : H :: L) : H :: Out = l.head :: aux(l.tail)
+  implicit def hlistFilterHNil[L <: HList, U]: Aux[HNil, U, HNil] =
+    new Filter[HNil, U] {
+      type Out = HNil
+      def apply(l : HNil): Out = HNil
     }
 
-  implicit def hlistFilter2[H, L <: HList, U, Out <: HList]
-    (implicit aux : FilterAux[L, U, Out], e : U =:!= H) = new FilterAux[H :: L, U, Out] {
-       def apply(l : H :: L) : Out = aux(l.tail)
-    }
+  implicit def hlistFilter1[L <: HList, H]
+    (implicit f : Filter[L, H]): Aux[H :: L, H, H :: f.Out] =
+      new Filter[H :: L, H] {
+        type Out = H :: f.Out
+        def apply(l : H :: L) : Out = l.head :: f(l.tail)
+      }
+
+  implicit def hlistFilter2[H, L <: HList, U]
+    (implicit f : Filter[L, U], e : U =:!= H): Aux[H :: L, U, f.Out] =
+      new Filter[H :: L, U] {
+        type Out = f.Out
+        def apply(l : H :: L): Out = f(l.tail)
+      }
 }
 
 /**

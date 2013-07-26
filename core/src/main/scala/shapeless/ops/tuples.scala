@@ -115,7 +115,7 @@ object tuple {
   object TupleFilter {
     type Aux[T, U, Out0] = TupleFilter[T, U] { type Out = Out0 }
     implicit def filterTuple[T, L1 <: HList, U, L2 <: HList]
-      (implicit gen: Generic.Aux[T, L1], filter: FilterAux[L1, U, L2], tp: Tupler[L2]): Aux[T, U, tp.Out] = new TupleFilter[T, U] {
+      (implicit gen: Generic.Aux[T, L1], filter: Filter.Aux[L1, U, L2], tp: Tupler[L2]): Aux[T, U, tp.Out] = new TupleFilter[T, U] {
         type Out = tp.Out
         def apply(t: T): Out = tp(filter(gen.to(t)))
       }
