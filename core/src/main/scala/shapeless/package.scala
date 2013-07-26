@@ -45,7 +45,7 @@ package object shapeless {
   }
 
   /** Dependent binary function type. */
-  trait DefFn2[T, U] {
+  trait DepFn2[T, U] {
     type Out
     def apply(t: T, u: U): Out
   }

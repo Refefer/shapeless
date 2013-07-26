@@ -664,12 +664,12 @@ object Length {
   type Aux[L <: HList, N <: Nat] = Length[L] { type Out = N }
   implicit def hnilLength: Aux[HNil, _0] = new Length[HNil] {
     type Out = _0
-    def apply() = _0
+    def apply(): Out = _0
   }
   
   implicit def hlistLength[H, T <: HList, N <: Nat](implicit lt : Aux[T, N], sn : WitnessAux[Succ[N]]): Aux[H :: T, Succ[N]] = new Length[H :: T] {
     type Out = Succ[N]
-    def apply() = sn.value
+    def apply(): Out = sn.value
   }
 }
 
@@ -688,14 +688,14 @@ object Mapper {
   implicit def hnilMapper1[HF]: Aux[HF, HNil, HNil] =
     new Mapper[HF, HNil] {
       type Out = HNil
-      def apply(l : HNil) = HNil
+      def apply(l : HNil): Out = HNil
     }
   
   implicit def hlistMapper1[HF <: Poly, InH, InT <: HList]
     (implicit hc : Case1Aux[HF, InH], mt : Mapper[HF, InT]): Aux[HF, InH :: InT, hc.Result :: mt.Out] =
       new Mapper[HF, InH :: InT] {
         type Out = hc.Result :: mt.Out
-        def apply(l : InH :: InT) = hc(l.head) :: mt(l.tail)
+        def apply(l : InH :: InT): Out = hc(l.head) :: mt(l.tail)
       }
 }
 
@@ -714,7 +714,7 @@ object FlatMapper {
   implicit def hnilFlatMapper1[HF]: Aux[HF, HNil, HNil] =
     new FlatMapper[HF, HNil] {
       type Out = HNil
-      def apply(l : HNil) = HNil
+      def apply(l : HNil): Out = HNil
     }
   
   implicit def hlistFlatMapper1[HF <: Poly, InH, OutH <: HList, InT <: HList, OutT <: HList, Out0 <: HList]
@@ -725,7 +725,7 @@ object FlatMapper {
     ): Aux[HF, InH :: InT, Out0] =
       new FlatMapper[HF, InH :: InT] {
         type Out = Out0
-        def apply(l : InH :: InT) = prepend(hc(l.head), mt(l.tail))
+        def apply(l : InH :: InT): Out = prepend(hc(l.head), mt(l.tail))
       }
 }
 
@@ -734,33 +734,24 @@ object FlatMapper {
  * 
  * @author Miles Sabin
  */
-trait ConstMapper[C, L <: HList] {
-  type Out <: HList
-  def apply(c : C, l : L) : Out
-}
-  
-trait ConstMapperAux[C, L <: HList, Out <: HList] {
-  def apply(c : C, l : L) : Out
-}
+trait ConstMapper[C, L <: HList] extends DepFn2[C, L] { type Out <: HList }
 
 object ConstMapper {
-  implicit def constMapper[L <: HList, C, Out0 <: HList](implicit mc : ConstMapperAux[C, L, Out0]) =
-    new ConstMapper[C, L] {
-      type Out = Out0
-      def apply(c : C, l : L) : Out = mc(c, l)
-    } 
-}
+  type Aux[C, L <: HList, Out0 <: HList] = ConstMapper[C, L] { type Out = Out0 }
 
-object ConstMapperAux {
-  implicit def hnilConstMapper[C] = new ConstMapperAux[C, HNil, HNil] {
-    def apply(c : C, l : HNil) = l 
-  }
-  
-  implicit def hlistConstMapper[H, T <: HList, C, OutT <: HList](implicit mct : ConstMapperAux[C, T, OutT]) =
-    new ConstMapperAux[C, H :: T, C :: OutT] {
-      def apply(c : C, l : H :: T) : C :: OutT = c :: mct(c, l.tail)  
+  implicit def hnilConstMapper[C]: Aux[C, HNil, HNil] =
+    new ConstMapper[C, HNil] {
+      type Out = HNil
+      def apply(c : C, l : HNil): Out = l 
     }
-}  
+  
+  implicit def hlistConstMapper[H, T <: HList, C]
+  (implicit mct : ConstMapper[C, T]): Aux[C, H :: T, C :: mct.Out] =
+      new ConstMapper[C, H :: T] {
+        type Out = C :: mct.Out
+        def apply(c : C, l : H :: T): Out = c :: mct(c, l.tail)  
+      }
+}
 
 /**
  * Type class supporting mapping a polymorphic function over this `HList` and then folding the result using a
@@ -1985,7 +1976,7 @@ object TransposerAux {
   }
   
   implicit def hlistTransposer1[H <: HList, MC <: HList, Out <: HList]
-    (implicit mc : ConstMapperAux[HNil, H, MC], zo : ZipOneAux[H, MC, Out]) = new TransposerAux[H :: HNil, Out] {
+    (implicit mc : ConstMapper.Aux[HNil, H, MC], zo : ZipOneAux[H, MC, Out]) = new TransposerAux[H :: HNil, Out] {
       def apply(l : H :: HNil) : Out = zo(l.head, mc(HNil, l.head))
     }
   

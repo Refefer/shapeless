@@ -38,7 +38,7 @@ object tuple {
         }
   }
 
-  trait TuplePrepend[T, U] extends DefFn2[T, U]
+  trait TuplePrepend[T, U] extends DepFn2[T, U]
 
   object TuplePrepend {
     type Aux[T, U, Out0] = TuplePrepend[T, U] { type Out = Out0 }
@@ -50,7 +50,7 @@ object tuple {
         }
   }
 
-  trait TupleReversePrepend[T, U] extends DefFn2[T, U]
+  trait TupleReversePrepend[T, U] extends DepFn2[T, U]
 
   object TupleReversePrepend {
     type Aux[T, U, Out0] = TupleReversePrepend[T, U] { type Out = Out0 }
@@ -155,7 +155,7 @@ object tuple {
         }
   }
 
-  trait TupleReplacer[T, U, V] extends DefFn2[T, U]
+  trait TupleReplacer[T, U, V] extends DepFn2[T, U]
 
   object TupleReplacer {
     type Aux[T, U, V, Out0] = TupleReplacer[T, U, V] { type Out = Out0 }
@@ -166,7 +166,7 @@ object tuple {
       }
   }
 
-  trait TupleReplaceAt[T, N <: Nat, U] extends DefFn2[T, U]
+  trait TupleReplaceAt[T, N <: Nat, U] extends DepFn2[T, U]
 
   object TupleReplaceAt {
     type Aux[T, N <: Nat, U, Out0] = TupleReplaceAt[T, N, U] { type Out = Out0 }
@@ -316,12 +316,12 @@ object tuple {
         }
   }
 
-  trait TupleConstMapper[T, C] extends DefFn2[T, C]
+  trait TupleConstMapper[T, C] extends DepFn2[T, C]
 
   object TupleConstMapper {
     type Aux[T, C, Out0] = TupleConstMapper[T, C] { type Out = Out0 }
     implicit def mapper[T, C, L1 <: HList, L2 <: HList]
-      (implicit gen: Generic.Aux[T, L1], mapper: ConstMapperAux[C, L1, L2], tp: Tupler[L2]): Aux[T, C, tp.Out] =
+      (implicit gen: Generic.Aux[T, L1], mapper: ConstMapper.Aux[C, L1, L2], tp: Tupler[L2]): Aux[T, C, tp.Out] =
         new TupleConstMapper[T, C] {
           type Out = tp.Out
           def apply(t: T, c: C): tp.Out = tp(mapper(c, gen.to(t)))
@@ -340,7 +340,7 @@ object tuple {
         }
   }
 
-  trait TupleLeftFolder[T, U, P] extends DefFn2[T, U]
+  trait TupleLeftFolder[T, U, P] extends DepFn2[T, U]
 
   object TupleLeftFolder {
     type Aux[T, U, P, Out0] = TupleLeftFolder[T, U, P] { type Out = Out0 }
@@ -352,7 +352,7 @@ object tuple {
         }
   }
 
-  trait TupleRightFolder[T, U, P] extends DefFn2[T, U]
+  trait TupleRightFolder[T, U, P] extends DepFn2[T, U]
 
   object TupleRightFolder {
     type Aux[T, U, P, Out0] = TupleRightFolder[T, U, P] { type Out = Out0 }
@@ -406,7 +406,7 @@ object tuple {
       }
   }
 
-  trait TupleZipApply[FT, AT] extends DefFn2[FT, AT]
+  trait TupleZipApply[FT, AT] extends DepFn2[FT, AT]
 
   object TupleZipApply {
     type Aux[FT, AT, Out0] = TupleZipApply[FT, AT] { type Out = Out0 }
@@ -423,7 +423,7 @@ object tuple {
       }
   }
 
-  trait TupleZipOne[H, T] extends DefFn2[H, T]
+  trait TupleZipOne[H, T] extends DepFn2[H, T]
 
   object TupleZipOne {
     type Aux[H, T, Out0] = TupleZipOne[H, T] { type Out = Out0 }
