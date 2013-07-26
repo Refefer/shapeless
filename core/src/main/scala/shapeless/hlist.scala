@@ -957,38 +957,46 @@ object SubtypeUnifier {
  * @author Miles Sabin
  */
 trait ToList[-L <: HList, Lub] {
-  def apply(l : L) : List[Lub]
+  def apply(l: L): List[Lub]
 }
 
 trait LowPriorityToList {
-  implicit def hlistToListAny[L <: HList] = new ToList[L, Any] {
-    val b = scala.collection.mutable.ListBuffer.empty[Any]
-    
-    def apply(l : L) : List[Any] = {
-      @tailrec
-      def loop(l : HList): Unit = l match {
-        case hd :: tl => b += hd ; loop(tl)
-        case _ =>
+  implicit def hlistToListAny[L <: HList]: ToList[L, Any] =
+    new ToList[L, Any] {
+      type Out = List[Any]
+      val b = scala.collection.mutable.ListBuffer.empty[Any]
+      
+      def apply(l : L): Out = {
+        @tailrec
+        def loop(l : HList): Unit = l match {
+          case hd :: tl => b += hd ; loop(tl)
+          case _ =>
+        }
+        loop(l)
+        b.toList
       }
-      loop(l)
-      b.toList
     }
-  }
 }
 
 object ToList extends LowPriorityToList {
-  implicit def hnilToList[T] : ToList[HNil, T] = new ToList[HNil, T] {
-    def apply(l : HNil) = Nil
-  }
-  
-  implicit def hsingleToList[T] : ToList[T :: HNil, T] = new ToList[T :: HNil, T] {
-    def apply(l : T :: HNil) = List(l.head)
-  }
-  
-  implicit def hlistToList[H1, H2, T <: HList, L](implicit u : Lub[H1, H2, L], ttl : ToList[H2 :: T, L]) =
-    new ToList[H1 :: H2 :: T, L] {
-      def apply(l : H1 :: H2 :: T) = u.left(l.head) :: ttl(l.tail)
+  implicit def hnilToList[T] : ToList[HNil, T] =
+    new ToList[HNil, T] {
+      type Out = List[T]
+      def apply(l : HNil): Out = Nil
     }
+  
+  implicit def hsingleToList[T] : ToList[T :: HNil, T] =
+    new ToList[T :: HNil, T] {
+      type Out = List[T]
+      def apply(l : T :: HNil): Out = List(l.head)
+    }
+  
+  implicit def hlistToList[H1, H2, T <: HList, L]
+    (implicit u : Lub[H1, H2, L], ttl : ToList[H2 :: T, L]): ToList[H1 :: H2 :: T, L] =
+      new ToList[H1 :: H2 :: T, L] {
+        type Out = List[L]
+        def apply(l : H1 :: H2 :: T): Out = u.left(l.head) :: ttl(l.tail)
+      }
 }
 
 /**
@@ -1002,44 +1010,48 @@ trait ToArray[-L <: HList, Lub] {
 }
 
 trait LowPriorityToArray {
-  implicit def hlistToArrayAnyRef[L <: HList] = new ToArray[L, Any] {
-    def apply(len: Int, l : L, i : Int) : Array[Any] = {
-      val arr = Array[Any](len)
-      
-      @tailrec
-      def loop(l : HList, i: Int): Unit = l match {
-        case hd :: tl => arr(i) = hd ; loop(tl, i+1)  
-        case _ =>
+  implicit def hlistToArrayAnyRef[L <: HList]: ToArray[L, Any] =
+    new ToArray[L, Any] {
+      def apply(len: Int, l : L, i : Int) : Array[Any] = {
+        val arr = Array[Any](len)
+        
+        @tailrec
+        def loop(l : HList, i: Int): Unit = l match {
+          case hd :: tl => arr(i) = hd ; loop(tl, i+1)  
+          case _ =>
+        }
+        loop(l, 0)
+        arr
       }
-      loop(l, 0)
-      arr
     }
-  }
 }
 
 object ToArray extends LowPriorityToArray {
   import scala.reflect.ClassTag
   
-  implicit def hnilToArray[T : ClassTag] : ToArray[HNil, T] = new ToArray[HNil, T] {
-    def apply(len : Int, l : HNil, i : Int) = Array.ofDim[T](len)
-  }
-  
-  implicit def hsingleToArray[T : ClassTag] : ToArray[T :: HNil, T] = new ToArray[T :: HNil, T] {
-    def apply(len : Int, l : T :: HNil, i : Int) = {
-      val arr = Array.ofDim[T](len)
-      arr(i) = l.head
-      arr
+  implicit def hnilToArray[T : ClassTag] : ToArray[HNil, T] =
+    new ToArray[HNil, T] {
+      def apply(len : Int, l : HNil, i : Int) = Array.ofDim[T](len)
     }
-  }
   
-  implicit def hlistToArray[H1, H2, T <: HList, L](implicit u : Lub[H1, H2, L], tta : ToArray[H2 :: T, L]) =
-    new ToArray[H1 :: H2 :: T, L] {
-      def apply(len : Int, l : H1 :: H2 :: T, i : Int) = {
-        val arr = tta(len, l.tail, i+1)
-        arr(i) = u.left(l.head)
+  implicit def hsingleToArray[T : ClassTag] : ToArray[T :: HNil, T] =
+    new ToArray[T :: HNil, T] {
+      def apply(len : Int, l : T :: HNil, i : Int) = {
+        val arr = Array.ofDim[T](len)
+        arr(i) = l.head
         arr
       }
     }
+  
+  implicit def hlistToArray[H1, H2, T <: HList, L]
+    (implicit u : Lub[H1, H2, L], tta : ToArray[H2 :: T, L]): ToArray[H1 :: H2 :: T, L] =
+      new ToArray[H1 :: H2 :: T, L] {
+        def apply(len : Int, l : H1 :: H2 :: T, i : Int) = {
+          val arr = tta(len, l.tail, i+1)
+          arr(i) = u.left(l.head)
+          arr
+        }
+      }
 }
 
 /**
