@@ -924,37 +924,29 @@ object Unifier {
  * 
  * @author Travis Brown
  */
-trait SubtypeUnifier[L <: HList, B] {
-  type Out
-  def apply(l : L) : Out
-}
+trait SubtypeUnifier[L <: HList, B] extends DepFn1[L] { type Out <: HList }
 
-trait SubtypeUnifierAux[L <: HList, B, Out <: HList] {
-  def apply(l : L) : Out
-}
-  
 object SubtypeUnifier {
-  implicit def subtypeUnifier[L <: HList, B, Out0 <: HList](implicit subtypeUnifier : SubtypeUnifierAux[L, B, Out0]) =
-    new SubtypeUnifier[L, B] {
-      type Out = Out0
-      def apply(l : L) : Out = subtypeUnifier(l)
-    }
-}
+  type Aux[L <: HList, B, Out0 <: HList] = SubtypeUnifier[L, B] { type Out = Out0 }
 
-object SubtypeUnifierAux {
-  implicit def hnilSubtypeUnifier[B] = new SubtypeUnifierAux[HNil, B, HNil] {
-    def apply(l : HNil) = l
-  }
-  
-  implicit def hlistSubtypeUnifier1[H, T <: HList, B, NT <: HList]
-    (implicit st : H <:< B, subtypeUnifier : SubtypeUnifierAux[T, B, NT]) = new SubtypeUnifierAux[H :: T, B, B :: NT] {
-      def apply(l : H :: T) = st(l.head) :: subtypeUnifier(l.tail) 
+  implicit def hnilSubtypeUnifier[B]: Aux[HNil, B, HNil] =
+    new SubtypeUnifier[HNil, B] {
+      type Out = HNil
+      def apply(l : HNil): Out = l
     }
   
-  implicit def hlistSubtypeUnifier2[H, T <: HList, B, NT <: HList]
-    (implicit nst : H <:!< B, subtypeUnifier : SubtypeUnifierAux[T, B, NT]) =
-      new SubtypeUnifierAux[H :: T, B, H :: NT] {
-        def apply(l : H :: T) = l.head :: subtypeUnifier(l.tail) 
+  implicit def hlistSubtypeUnifier1[H, T <: HList, B]
+    (implicit st : H <:< B, sut: SubtypeUnifier[T, B]): Aux[H :: T, B, B :: sut.Out] =
+      new SubtypeUnifier[H :: T, B] {
+        type Out = B :: sut.Out
+        def apply(l : H :: T): Out = st(l.head) :: sut(l.tail) 
+      }
+  
+  implicit def hlistSubtypeUnifier2[H, T <: HList, B]
+    (implicit nst : H <:!< B, sut: SubtypeUnifier[T, B]): Aux[H :: T, B, H :: sut.Out] =
+      new SubtypeUnifier[H :: T, B] {
+        type Out = H :: sut.Out
+        def apply(l : H :: T): Out = l.head :: sut(l.tail) 
       }
 }
 
