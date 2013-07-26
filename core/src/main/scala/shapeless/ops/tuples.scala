@@ -447,7 +447,7 @@ object tuple {
   object TupleUnifier {
     type Aux[T, Out0] = TupleUnifier[T] { type Out = Out0 }
     implicit def unifier[T, L1 <: HList, L2 <: HList]
-      (implicit gen: Generic.Aux[T, L1], unifier: UnifierAux[L1, L2], tp: Tupler[L2]): Aux[T, tp.Out] =
+      (implicit gen: Generic.Aux[T, L1], unifier: Unifier.Aux[L1, L2], tp: Tupler[L2]): Aux[T, tp.Out] =
         new TupleUnifier[T] {
           type Out = tp.Out
           def apply(t: T): Out = unifier(gen.to(t)).tupled

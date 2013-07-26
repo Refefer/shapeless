@@ -303,13 +303,13 @@ class HListTests {
     val u35 = lub(1 :: "two" :: 3 :: 4 :: HNil, 1 :: 2 :: 3 :: 4 :: HNil) 
     typed[(Int :: Any :: Int :: Int :: HNil, Int :: Any :: Int :: Int :: HNil)](u35)
     
-    implicitly[UnifierAux[Apple :: HNil, Apple :: HNil]]
-    implicitly[UnifierAux[Fruit :: Pear :: HNil, Fruit :: Fruit :: HNil]]
-    implicitly[UnifierAux[Apple :: Pear :: HNil, Fruit :: Fruit :: HNil]]
+    implicitly[Unifier.Aux[Apple :: HNil, Apple :: HNil]]
+    implicitly[Unifier.Aux[Fruit :: Pear :: HNil, Fruit :: Fruit :: HNil]]
+    implicitly[Unifier.Aux[Apple :: Pear :: HNil, Fruit :: Fruit :: HNil]]
     
-    implicitly[UnifierAux[Int :: String :: Int :: Int :: HNil, YYYY]]
+    implicitly[Unifier.Aux[Int :: String :: Int :: Int :: HNil, YYYY]]
     
-    val uapap = implicitly[UnifierAux[Apple :: Pear :: Apple :: Pear :: HNil, FFFF]]
+    val uapap = implicitly[Unifier.Aux[Apple :: Pear :: Apple :: Pear :: HNil, FFFF]]
     val unified1 = uapap(apap)
     typed[FFFF](unified1)
     val unified2 = apap.unify
@@ -322,30 +322,30 @@ class HListTests {
     assertFalse(ununified2.isDefined)
     typed[Option[APBP]](ununified2)
 
-    def getUnifier[L <: HList, Out <: HList](l : L)(implicit u : UnifierAux[L, Out]) = u
+    def getUnifier[L <: HList, Out <: HList](l : L)(implicit u : Unifier.Aux[L, Out]) = u
     
     val u2 = getUnifier(a :: HNil)
-    typed[UnifierAux[Apple :: HNil, Apple :: HNil]](u2)
+    typed[Unifier.Aux[Apple :: HNil, Apple :: HNil]](u2)
     val u3 = getUnifier(a :: a :: HNil)
-    typed[UnifierAux[Apple :: Apple :: HNil, Apple :: Apple :: HNil]](u3)
+    typed[Unifier.Aux[Apple :: Apple :: HNil, Apple :: Apple :: HNil]](u3)
     val u4 = getUnifier(a :: a :: a :: HNil)
-    typed[UnifierAux[Apple :: Apple :: Apple :: HNil, Apple :: Apple :: Apple :: HNil]](u4)
+    typed[Unifier.Aux[Apple :: Apple :: Apple :: HNil, Apple :: Apple :: Apple :: HNil]](u4)
     val u5 = getUnifier(a :: a :: a :: a :: HNil)
-    typed[UnifierAux[Apple :: Apple :: Apple :: Apple :: HNil, Apple :: Apple :: Apple :: Apple :: HNil]](u5)
+    typed[Unifier.Aux[Apple :: Apple :: Apple :: Apple :: HNil, Apple :: Apple :: Apple :: Apple :: HNil]](u5)
     val u6 = getUnifier(a :: p :: HNil)
-    //typed[UnifierAux[Apple :: Pear :: HNil, Fruit :: Fruit :: HNil]](u6)
+    //typed[Unifier.Aux[Apple :: Pear :: HNil, Fruit :: Fruit :: HNil]](u6)
     val u7 = getUnifier(a :: f :: HNil)
-    typed[UnifierAux[Apple :: Fruit :: HNil, Fruit :: Fruit :: HNil]](u7)
+    typed[Unifier.Aux[Apple :: Fruit :: HNil, Fruit :: Fruit :: HNil]](u7)
     val u8 = getUnifier(f :: a :: HNil)
-    typed[UnifierAux[Fruit :: Apple :: HNil, Fruit :: Fruit :: HNil]](u8)
+    typed[Unifier.Aux[Fruit :: Apple :: HNil, Fruit :: Fruit :: HNil]](u8)
     val u9a = getUnifier(a :: f :: HNil)
-    typed[UnifierAux[Apple :: Fruit :: HNil, FF]](u9a)
+    typed[Unifier.Aux[Apple :: Fruit :: HNil, FF]](u9a)
     val u9b = getUnifier(a :: p :: HNil)
-    typed[UnifierAux[Apple :: Pear :: HNil, PWS :: PWS :: HNil]](u9b)
+    typed[Unifier.Aux[Apple :: Pear :: HNil, PWS :: PWS :: HNil]](u9b)
     val u10 = getUnifier(apap)
-    typed[UnifierAux[APAP, PWS :: PWS :: PWS :: PWS :: HNil]](u10)
+    typed[Unifier.Aux[APAP, PWS :: PWS :: PWS :: PWS :: HNil]](u10)
     val u11 = getUnifier(apbp)
-    typed[UnifierAux[APBP, PWS :: PWS :: PWS :: PWS :: HNil]](u11)
+    typed[Unifier.Aux[APBP, PWS :: PWS :: PWS :: PWS :: HNil]](u11)
     
     val invar1 = Set(23) :: Set("foo") :: HNil
     val uinvar1 = invar1.unify

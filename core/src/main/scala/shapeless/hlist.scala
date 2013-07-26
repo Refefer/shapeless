@@ -878,14 +878,14 @@ object RightReducer {
  * @author Miles Sabin
  */
 trait Lub[-A, -B, +Out] {
-  def left(a : A) : Out
-  def right(b : B) : Out
+  def left(a : A): Out
+  def right(b : B): Out
 }
 
 object Lub {
   implicit def lub[T] = new Lub[T, T, T] {
-    def left(a : T) : T = a
-    def right(b : T) : T = b
+    def left(a : T): T = a
+    def right(b : T): T = b
   }
 }
 
@@ -894,35 +894,28 @@ object Lub {
  * 
  * @author Miles Sabin
  */
-trait Unifier[L <: HList] {
-  type Out
-  def apply(l : L) : Out
-}
+trait Unifier[L <: HList] extends DepFn1[L] { type Out <: HList }
 
-trait UnifierAux[L <: HList, Out <: HList] {
-  def apply(l : L) : Out
-}
-  
 object Unifier {
-  implicit def unifier[L <: HList, Out0 <: HList](implicit unifier : UnifierAux[L, Out0]) = new Unifier[L] {
-    type Out = Out0
-    def apply(l : L) : Out = unifier(l)
-  }
-}
+  type Aux[L <: HList, Out0 <: HList] = Unifier[L] { type Out = Out0 }
 
-object UnifierAux {
-  implicit def hnilUnifier[T] = new UnifierAux[HNil, HNil] {
-    def apply(l : HNil) = l
+  implicit val hnilUnifier: Aux[HNil, HNil] = new Unifier[HNil] {
+    type Out = HNil
+    def apply(l : HNil): Out = l
   }
   
-  implicit def hsingleUnifier[T] = new UnifierAux[T :: HNil, T :: HNil] {
-    def apply(l : T :: HNil) = l
-  }
-  
-  implicit def hlistUnifier[H1, H2, L, T <: HList, Out <: HList]
-    (implicit u : Lub[H1, H2, L], lt : UnifierAux[L :: T, L :: Out]) = new UnifierAux[H1 :: H2 :: T, L :: L :: Out] {
-      def apply(l : H1 :: H2 :: T) : L :: L :: Out = u.left(l.head) :: lt(u.right(l.tail.head) :: l.tail.tail)
+  implicit def hsingleUnifier[T]: Aux[T :: HNil, T :: HNil] =
+    new Unifier[T :: HNil] {
+      type Out = T :: HNil
+      def apply(l : T :: HNil): Out = l
     }
+  
+  implicit def hlistUnifier[H1, H2, L, T <: HList]
+    (implicit u : Lub[H1, H2, L], lt : Unifier[L :: T]): Aux[H1 :: H2 :: T, L :: lt.Out] =
+      new Unifier[H1 :: H2 :: T] {
+        type Out = L :: lt.Out
+        def apply(l : H1 :: H2 :: T): Out = u.left(l.head) :: lt(u.right(l.tail.head) :: l.tail.tail)
+      }
 }
 
 /**
