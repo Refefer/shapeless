@@ -766,14 +766,14 @@ trait MapFolder[L <: HList, R, HF] {
 object MapFolder {
   import Poly._
   
-  implicit def hnilMapFolder[R, HF] = new MapFolder[HNil, R, HF] {
-    def apply(l : HNil, in : R, op : (R, R) => R) = in
+  implicit def hnilMapFolder[R, HF]: MapFolder[HNil, R, HF] = new MapFolder[HNil, R, HF] {
+    def apply(l : HNil, in : R, op : (R, R) => R): R = in
   }
   
   implicit def hlistMapFolder[H, T <: HList, R, HF <: Poly]
-    (implicit hc : Pullback1Aux[HF, H, R], tf : MapFolder[T, R, HF]) =
+    (implicit hc : Pullback1Aux[HF, H, R], tf : MapFolder[T, R, HF]): MapFolder[H :: T, R, HF] =
       new MapFolder[H :: T, R, HF] {
-        def apply(l : H :: T, in : R, op : (R, R) => R) = op(hc(l.head), tf(l.tail, in, op))
+        def apply(l : H :: T, in : R, op : (R, R) => R): R = op(hc(l.head), tf(l.tail, in, op))
       }
 }
 
