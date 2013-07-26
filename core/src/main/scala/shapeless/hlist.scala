@@ -1059,26 +1059,14 @@ object ToArray extends LowPriorityToArray {
  * 
  * @author Miles Sabin
  */
-trait Tupler[L <: HList] {
-  type Out
-  def apply(l : L) : Out
-}
-  
-trait TuplerAux[L <: HList, Out] {
-  def apply(l : L) : Out
-}
-  
-object Tupler {
-  implicit def tupler[L <: HList, Out0](implicit tupler : TuplerAux[L, Out0]) = new Tupler[L] {
-    type Out = Out0
-    def apply(l : L) : Out = tupler(l)
-  }
-}
+trait Tupler[L <: HList] extends DepFn1[L]
 
-object TuplerAux extends TuplerAuxInstances {
-  implicit val hnilTupler = new TuplerAux[HNil, Unit] {
-    def apply(l: HNil): Unit = ()
-  }
+object Tupler extends TuplerInstances {
+  implicit val hnilTupler: Aux[HNil, Unit] =
+    new Tupler[HNil] {
+      type Out = Unit
+      def apply(l: HNil): Out = ()
+    }
 }
 
 /**

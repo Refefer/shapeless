@@ -44,11 +44,11 @@ trait ProductLens[C, P <: Product] extends Lens[C, P] {
   def ~[T, L <: HList, LT <: HList, Q <: Product](other : Lens[C, T])
     (implicit
       hlp  : HListerAux[P, L],
-      tpp  : TuplerAux[L, P],
+      tpp  : Tupler.Aux[L, P],
       pre  : PrependAux[L, T :: HNil, LT],
       init : InitAux[LT, L],
       last : LastAux[LT, T],
-      tpq  : TuplerAux[LT, Q],
+      tpq  : Tupler.Aux[LT, Q],
       hlq  : HListerAux[Q, LT]) =
       new ProductLens[C, Q] {
         def get(c : C) : Q = (hlp(outer.get(c)) :+ other.get(c)).tupled
