@@ -488,24 +488,13 @@ trait IsHCons[L <: HList] {
 }
 
 object IsHCons {
+  type Aux[L <: HList, H0, T0 <: HList] = IsHCons[L] { type H = H0; type T = T0 }
   implicit def hlistIsHCons[H0, T0 <: HList] = new IsHCons[H0 :: T0] {
     type H = H0
     type T = T0
   
     def head(l : H0 :: T0) : H = l.head
     def tail(l : H0 :: T0) : T = l.tail
-  }
-}
-
-trait IsHConsAux[L <: HList, H, T <: HList] {
-  def head(l : L) : H
-  def tail(l : L) : T
-}
-
-object IsHConsAux {
-  implicit def hlistIsHCons[H, T <: HList] = new IsHConsAux[H :: T, H, T] {
-    def head(l : H :: T) : H = l.head
-    def tail(l : H :: T) : T = l.tail
   }
 }
 
@@ -517,51 +506,36 @@ trait Mapped[L <: HList, F[_]] {
 }
 
 object Mapped {
-  implicit def mapped[L <: HList, F[_], Out0 <: HList](implicit mapped : MappedAux[L, F, Out0]) = new Mapped[L, F] {
-    type Out = Out0
-  }
-}
+  type Aux[L <: HList, F[_], Out0 <: HList] = Mapped[L, F] { type Out = Out0 }
 
-trait MappedAux[L <: HList, F[_], Out <: HList]
-
-object MappedAux {
-  implicit def hnilMappedAux[F[_]] = new MappedAux[HNil, F, HNil] {}
+  implicit def hnilMapped[F[_]]: Aux[HNil, F, HNil] = new Mapped[HNil, F] { type Out = HNil }
   
-  implicit def hlistIdMapped[L <: HList] = new MappedAux[L, Id, L] {}
+  implicit def hlistIdMapped[L <: HList]: Aux[L, Id, L] = new Mapped[L, Id] { type Out = L }
   
-  implicit def hlistMappedAux1[H, T <: HList, F[_], OutT <: HList](implicit mt : MappedAux[T, F, OutT]) =
-    new MappedAux[H :: T, F, F[H] :: OutT] {}
+  implicit def hlistMapped1[H, T <: HList, F[_]](implicit mt : Mapped[T, F]): Aux[H :: T, F, F[H] :: mt.Out] =
+    new Mapped[H :: T, F] { type Out = F[H] :: mt.Out }
 
-  implicit def hlistMappedAux2[H, T <: HList, F, OutT <: HList](implicit mt : MappedAux[T, Const[F]#λ, OutT]) =
-    new MappedAux[H :: T, Const[F]#λ, F :: OutT] {}
+  implicit def hlistMapped2[H, T <: HList, F](implicit mt : Mapped[T, Const[F]#λ]): Aux[H :: T, Const[F]#λ, F :: mt.Out] =
+    new Mapped[H :: T, Const[F]#λ] { type Out = F :: mt.Out }
 }
 
 /**
  * Type class witnessing that the result of stripping type constructor `F` off each element of `HList` `L` is `Out`.
  */
-trait Comapped[L <: HList] {
+trait Comapped[L <: HList, F[_]] {
   type Out <: HList
-  type F[_]
 }
 
-object Comapped {
-  implicit def comapped[L <: HList, F0[_], Out0 <: HList](implicit mapped: ComappedAux[L, F0, Out0]) = new Comapped[L] {
-    type Out = Out0
-    type F[X] = F0[X]
-  }
+trait LowPriorityComapped {
+  type Aux[L <: HList, F[_], Out0 <: HList] = Comapped[L, F] { type Out = Out0 }
+  implicit def hlistIdComapped[L <: HList]: Aux[L, Id, L] = new Comapped[L, Id] { type Out = L }
 }
 
-trait ComappedAux[L <: HList, F[_], Out <: HList]
+object Comapped extends LowPriorityComapped {
+  implicit def hnilComapped[F[_]]: Aux[HNil, F, HNil] = new Comapped[HNil, F] { type Out = HNil }
 
-trait LowPriorityComappedAux {
-  implicit def hlistIdComapped[L <: HList] = new ComappedAux[L, Id, L] {}
-}
-
-object ComappedAux extends LowPriorityComappedAux {
-  implicit def hnilComappedAux[F[_]] = new ComappedAux[HNil, F, HNil] {}
-
-  implicit def hlistComappedAux[H, T <: HList, F[_], OutT <: HList](implicit mt : ComappedAux[T, F, OutT]) =
-    new ComappedAux[F[H] :: T, F, H :: OutT] {}
+  implicit def hlistComapped[H, T <: HList, F[_]](implicit mt : Comapped[T, F]): Aux[F[H] :: T, F, H :: mt.Out] =
+    new Comapped[F[H] :: T, F] { type Out = H :: mt.Out }
 }
 
 /**

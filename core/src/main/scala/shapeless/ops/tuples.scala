@@ -29,7 +29,7 @@ object tuple {
   object IsComposite {
     type Aux[P, H0, T0] = IsComposite[P] { type H = H0; type T = T0 }
     implicit def isComposite[P, L <: HList, H0, T <: HList]
-      (implicit gen: Generic.Aux[P, L], isHCons: IsHConsAux[L, H0, T], tp: Tupler[T]): Aux[P, H0, tp.Out] =
+      (implicit gen: Generic.Aux[P, L], isHCons: IsHCons.Aux[L, H0, T], tp: Tupler[T]): Aux[P, H0, tp.Out] =
         new IsComposite[P] {
           type H = H0
           type T = tp.Out
