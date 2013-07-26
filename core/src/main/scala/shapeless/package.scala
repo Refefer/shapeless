@@ -32,6 +32,12 @@ package object shapeless {
     def toInt(n : Nat)(implicit toIntN : ToInt[n.N]) = toIntN()
   }
 
+  /** Dependent nullary function type. */
+  trait DepFn0[T] {
+    type Out
+    def apply(): Out
+  }
+
   /** Dependent unary function type. */
   trait DepFn1[T] {
     type Out

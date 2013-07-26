@@ -657,29 +657,18 @@ object HKernelAux {
  * 
  * @author Miles Sabin
  */
-trait Length[-L <: HList] {
-  type Out <: Nat
-  def apply() : Out
-}
-
-trait LengthAux[-L <: HList, N <: Nat] {
-  def apply() : N
-}
+trait Length[L <: HList] extends DepFn0[L]
 
 object Length {
-  implicit def length[L <: HList, N <: Nat](implicit length : LengthAux[L, N]) = new Length[L] {
-    type Out = N
-    def apply() = length()
-  }
-}
-
-object LengthAux {
   import nat._
-  implicit def hnilLength = new LengthAux[HNil, _0] {
+  type Aux[L <: HList, N <: Nat] = Length[L] { type Out = N }
+  implicit def hnilLength: Aux[HNil, _0] = new Length[HNil] {
+    type Out = _0
     def apply() = _0
   }
   
-  implicit def hlistLength[H, T <: HList, N <: Nat](implicit lt : LengthAux[T, N], sn : WitnessAux[Succ[N]]) = new LengthAux[H :: T, Succ[N]] {
+  implicit def hlistLength[H, T <: HList, N <: Nat](implicit lt : Aux[T, N], sn : WitnessAux[Succ[N]]): Aux[H :: T, Succ[N]] = new Length[H :: T] {
+    type Out = Succ[N]
     def apply() = sn.value
   }
 }
