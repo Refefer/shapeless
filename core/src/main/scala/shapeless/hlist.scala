@@ -1130,13 +1130,16 @@ trait Selector[L <: HList, U] {
 }
 
 object Selector {
-  implicit def hlistSelect1[H, T <: HList] = new Selector[H :: T, H] {
-    def apply(l : H :: T) = l.head
-  }
+  implicit def hlistSelect1[H, T <: HList]: Selector[H :: T, H] =
+    new Selector[H :: T, H] {
+      def apply(l : H :: T) = l.head
+    }
 
-  implicit def hlistSelect[H, T <: HList, U](implicit st : Selector[T, U]) = new Selector[H :: T, U] {
-    def apply(l : H :: T) = st(l.tail)
-  }
+  implicit def hlistSelect[H, T <: HList, U]
+    (implicit st : Selector[T, U]): Selector[H :: T, U] =
+      new Selector[H :: T, U] {
+        def apply(l : H :: T) = st(l.tail)
+      }
 }
 
 /**
