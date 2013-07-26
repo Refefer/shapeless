@@ -46,8 +46,8 @@ trait ProductLens[C, P <: Product] extends Lens[C, P] {
       hlp  : HListerAux[P, L],
       tpp  : Tupler.Aux[L, P],
       pre  : PrependAux[L, T :: HNil, LT],
-      init : InitAux[LT, L],
-      last : LastAux[LT, T],
+      init : Init.Aux[LT, L],
+      last : Last.Aux[LT, T],
       tpq  : Tupler.Aux[LT, Q],
       hlq  : HListerAux[Q, LT]) =
       new ProductLens[C, Q] {

@@ -1075,30 +1075,23 @@ object Tupler extends TuplerInstances {
  * 
  * @author Miles Sabin
  */
-trait Last[L <: HList] {
-  type Out
-  def apply(l : L) : Out
-}
+trait Last[L <: HList] extends DepFn1[L]
 
-trait LastAux[L <: HList, Out] {
-  def apply(l : L) : Out
-}
-  
 object Last {
-  implicit def last[L <: HList, Out0](implicit last : LastAux[L, Out0]) = new Last[L] {
-    type Out = Out0
-    def apply(l : L) : Out = last(l)
-  }
-}
+  type Aux[L <: HList, Out0] = Last[L] { type Out = Out0 }
 
-object LastAux {
-  implicit def hsingleLast[H] = new LastAux[H :: HNil, H] {
-    def apply(l : H :: HNil) : H = l.head
-  }
+  implicit def hsingleLast[H]: Aux[H :: HNil, H] =
+    new Last[H :: HNil] {
+      type Out = H
+      def apply(l : H :: HNil): Out = l.head
+    }
   
-  implicit def hlistLast[H, T <: HList, Out](implicit lt : LastAux[T, Out]) = new LastAux[H :: T, Out] {
-    def apply(l : H :: T) : Out = lt(l.tail) 
-  }
+  implicit def hlistLast[H, T <: HList]
+    (implicit lt : Last[T]): Aux[H :: T, lt.Out] =
+      new Last[H :: T] {
+        type Out = lt.Out
+        def apply(l : H :: T): Out = lt(l.tail) 
+      }
 }
 
 /**
@@ -1107,31 +1100,23 @@ object LastAux {
  * 
  * @author Miles Sabin
  */
-trait Init[L <: HList] {
-  type Out <: HList
-  def apply(l : L) : Out
-}
+trait Init[L <: HList] extends DepFn1[L] { type Out <: HList }
 
-trait InitAux[L <: HList, Out <: HList] {
-  def apply(l : L) : Out
-}
-  
 object Init {
-  implicit def init[L <: HList, Out0 <: HList](implicit init : InitAux[L, Out0]) = new Init[L] {
-    type Out = Out0
-    def apply(l : L) : Out = init(l)
-  }
-}
+  type Aux[L <: HList, Out0 <: HList] = Init[L] { type Out = Out0 }
 
-object InitAux {
-  implicit def hsingleInit[H] = new InitAux[H :: HNil, HNil] {
-    def apply(l : H :: HNil) : HNil = HNil
-  }
-  
-  implicit def hlistInit[H, T <: HList, OutH, OutT <: HList](implicit it : InitAux[T, OutT]) =
-    new InitAux[H :: T, H :: OutT] {
-      def apply(l : H :: T) : H :: OutT = l.head :: it(l.tail)
+  implicit def hsingleInit[H]: Aux[H :: HNil, HNil] =
+    new Init[H :: HNil] {
+      type Out = HNil
+      def apply(l : H :: HNil): Out = HNil
     }
+  
+  implicit def hlistInit[H, T <: HList, OutH, OutT <: HList]
+    (implicit it : Init[T]): Aux[H :: T, H :: it.Out] =
+      new Init[H :: T] {
+        type Out = H :: it.Out
+        def apply(l : H :: T): Out = l.head :: it(l.tail)
+      }
 }  
 
 /**

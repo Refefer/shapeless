@@ -91,7 +91,7 @@ object tuple {
   object TupleInit {
     type Aux[T, Out0] = TupleInit[T] { type Out = Out0 }
     implicit def init[T, L1 <: HList, L2 <: HList]
-      (implicit gen: Generic.Aux[T, L1], init: InitAux[L1, L2], tp: Tupler[L2]): Aux[T, tp.Out] =
+      (implicit gen: Generic.Aux[T, L1], init: Init.Aux[L1, L2], tp: Tupler[L2]): Aux[T, tp.Out] =
         new TupleInit[T] {
           type Out = tp.Out
           def apply(t: T): Out = init(gen.to(t)).tupled
