@@ -105,9 +105,9 @@ class HListTests {
 
   @Test
   def testMap {
-    implicitly[MapperAux[choose.type, HNil, HNil]]
+    implicitly[Mapper.Aux[choose.type, HNil, HNil]]
     implicitly[choose.Case1[Set[Int]]]
-    implicitly[MapperAux[choose.type, Set[Int] :: HNil, Option[Int] :: HNil]]
+    implicitly[Mapper.Aux[choose.type, Set[Int] :: HNil, Option[Int] :: HNil]]
     
     val s1 = Set(1) :: HNil
     val o1 = s1 map choose
@@ -452,8 +452,8 @@ class HListTests {
   
   @Test
   def testFoldMap {
-    implicitly[MapperAux[isDefined.type, HNil, HNil]]
-    implicitly[MapperAux[isDefined.type, Option[Int] :: HNil, Boolean :: HNil]]
+    implicitly[Mapper.Aux[isDefined.type, HNil, HNil]]
+    implicitly[Mapper.Aux[isDefined.type, Option[Int] :: HNil, Boolean :: HNil]]
     
     val tl1 = Option(1) :: Option("foo") :: Option(2) :: Option(3) :: HNil 
     val tl2 = Option(1) :: Option("foo") :: (None : Option[Int]) :: Option(3) :: HNil
@@ -959,10 +959,10 @@ class HListTests {
     typed[(Int, Int) :: (String, String) :: (Double, Double) :: HNil](z1)
     assertEquals((1, 2) :: ("a", "b") :: (1.0, 2.0) :: HNil, z1)
     
-    def zip[L <: HList, OutT <: HList, OutM <: HList](l : L)
+    def zip[L <: HList, OutT <: HList](l : L)
       (implicit
         transposer : TransposerAux[L, OutT],
-        mapper : MapperAux[tupled.type, OutT, OutM]) = l.transpose.map(tupled)
+        mapper : Mapper[tupled.type, OutT]) = l.transpose.map(tupled)
     
     val z2 = zip(l1 :: l2 :: HNil)
     typed[(Int, Int) :: (String, String) :: (Double, Double) :: HNil](z2)
@@ -979,7 +979,7 @@ class HListTests {
 
     def unzip[L <: HList, OutM <: HList, OutT <: HList](l : L)
       (implicit
-        mapper : MapperAux[productElements.type, L, OutM],
+        mapper : Mapper.Aux[productElements.type, L, OutM],
         transposer : TransposerAux[OutM, OutT],
         tupler : Tupler[OutT]) = l.map(productElements).transpose.tupled
         

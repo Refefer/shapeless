@@ -297,7 +297,7 @@ object tuple {
   object TupleMapper {
     type Aux[T, P, Out0] = TupleMapper[T, P] { type Out = Out0 }
     implicit def mapper[T, P, L1 <: HList, L2 <: HList]
-      (implicit gen: Generic.Aux[T, L1], mapper: MapperAux[P, L1, L2], tp: Tupler[L2]): Aux[T, P, tp.Out] =
+      (implicit gen: Generic.Aux[T, L1], mapper: Mapper.Aux[P, L1, L2], tp: Tupler[L2]): Aux[T, P, tp.Out] =
         new TupleMapper[T, P] {
           type Out = tp.Out
           def apply(t: T): tp.Out = tp(mapper(gen.to(t)))
@@ -309,7 +309,7 @@ object tuple {
   object TupleFlatMapper {
     type Aux[T, P, Out0] = TupleFlatMapper[T, P] { type Out = Out0 }
     implicit def mapper[T, P, L1 <: HList, L2 <: HList]
-      (implicit gen: Generic.Aux[T, L1], mapper: FlatMapperAux[Compose[productElements.type, P], L1, L2], tp: Tupler[L2]): Aux[T, P, tp.Out] =
+      (implicit gen: Generic.Aux[T, L1], mapper: FlatMapper.Aux[Compose[productElements.type, P], L1, L2], tp: Tupler[L2]): Aux[T, P, tp.Out] =
         new TupleFlatMapper[T, P] {
           type Out = tp.Out
           def apply(t: T): tp.Out = tp(mapper(gen.to(t)))
@@ -395,9 +395,9 @@ object tuple {
     implicit def transpose[T, L1 <: HList, L2 <: HList, L3 <: HList, L4 <: HList]
       (implicit
         gen: Generic.Aux[T, L1],
-        mpe: MapperAux[productElements.type, L1, L2],
+        mpe: Mapper.Aux[productElements.type, L1, L2],
         tps: TransposerAux[L2, L3],
-        mtp: MapperAux[tupled.type, L3, L4],
+        mtp: Mapper.Aux[tupled.type, L3, L4],
         tp:  Tupler[L4]
       ): Aux[T, tp.Out] =
       new TupleTransposer[T] {
@@ -431,9 +431,9 @@ object tuple {
       (implicit
         genh: Generic.Aux[HT, HL],
         gent: Generic.Aux[TT, TL],
-        mpet: MapperAux[productElements.type, TL, TLL],
+        mpet: Mapper.Aux[productElements.type, TL, TLL],
         zone: ZipOneAux[HL, TLL, RLL],
-        mtp:  MapperAux[tupled.type, RLL, RL],
+        mtp:  Mapper.Aux[tupled.type, RLL, RL],
         tp:   Tupler[RL]
       ): Aux[HT, TT, tp.Out] =
       new TupleZipOne[HT, TT] {

@@ -512,11 +512,11 @@ object Mapped {
   
   implicit def hlistIdMapped[L <: HList]: Aux[L, Id, L] = new Mapped[L, Id] { type Out = L }
   
-  implicit def hlistMapped1[H, T <: HList, F[_]](implicit mt : Mapped[T, F]): Aux[H :: T, F, F[H] :: mt.Out] =
-    new Mapped[H :: T, F] { type Out = F[H] :: mt.Out }
+  implicit def hlistMapped1[H, T <: HList, F[_], OutM <: HList](implicit mt : Mapped.Aux[T, F, OutM]): Aux[H :: T, F, F[H] :: OutM] =
+    new Mapped[H :: T, F] { type Out = F[H] :: OutM }
 
-  implicit def hlistMapped2[H, T <: HList, F](implicit mt : Mapped[T, Const[F]#λ]): Aux[H :: T, Const[F]#λ, F :: mt.Out] =
-    new Mapped[H :: T, Const[F]#λ] { type Out = F :: mt.Out }
+  implicit def hlistMapped2[H, T <: HList, F, OutM <: HList](implicit mt : Mapped.Aux[T, Const[F]#λ, OutM]): Aux[H :: T, Const[F]#λ, F :: OutM] =
+    new Mapped[H :: T, Const[F]#λ] { type Out = F :: OutM }
 }
 
 /**
@@ -657,7 +657,7 @@ object HKernelAux {
  * 
  * @author Miles Sabin
  */
-trait Length[L <: HList] extends DepFn0[L]
+trait Length[L <: HList] extends DepFn0[L] { type Out <: Nat }
 
 object Length {
   import nat._
@@ -678,33 +678,25 @@ object Length {
  * 
  * @author Miles Sabin
  */
-trait Mapper[HF, In <: HList] {
-  type Out <: HList
-  def apply(in: In) : Out
-}
-
-trait MapperAux[HF, In <: HList, Out <: HList] {
-  def apply(in: In) : Out
-}
+trait Mapper[HF, In <: HList] extends DepFn1[In] { type Out <: HList }
 
 object Mapper {
-  implicit def mapper[HF, In <: HList, Out0 <: HList](implicit mapper : MapperAux[HF, In, Out0]) = new Mapper[HF, In] {
-    type Out = Out0
-    def apply(in: In) : Out = mapper(in)
-  }
-}
-
-object MapperAux {
   import Poly._
+
+  type Aux[HF, In <: HList, Out0 <: HList] = Mapper[HF, In] { type Out = Out0 }
   
-  implicit def hnilMapper1[HF] = new MapperAux[HF, HNil, HNil] {
-    def apply(l : HNil) = HNil
-  }
+  implicit def hnilMapper1[HF]: Aux[HF, HNil, HNil] =
+    new Mapper[HF, HNil] {
+      type Out = HNil
+      def apply(l : HNil) = HNil
+    }
   
-  implicit def hlistMapper1[HF <: Poly, InH, OutH, InT <: HList, OutT <: HList]
-    (implicit hc : Pullback1Aux[HF, InH, OutH], mt : MapperAux[HF, InT, OutT]) = new MapperAux[HF, InH :: InT, OutH :: OutT] {
-      def apply(l : InH :: InT) = hc(l.head) :: mt(l.tail)
-  }
+  implicit def hlistMapper1[HF <: Poly, InH, InT <: HList]
+    (implicit hc : Case1Aux[HF, InH], mt : Mapper[HF, InT]): Aux[HF, InH :: InT, hc.Result :: mt.Out] =
+      new Mapper[HF, InH :: InT] {
+        type Out = hc.Result :: mt.Out
+        def apply(l : InH :: InT) = hc(l.head) :: mt(l.tail)
+      }
 }
 
 /**
@@ -712,36 +704,27 @@ object MapperAux {
  * 
  * @author Miles Sabin
  */
-trait FlatMapper[HF, In <: HList] {
-  type Out <: HList
-  def apply(in: In) : Out
-}
-
-trait FlatMapperAux[HF, In <: HList, Out <: HList] {
-  def apply(in: In) : Out
-}
+trait FlatMapper[HF, In <: HList] extends DepFn1[In] { type Out <: HList }
 
 object FlatMapper {
-  implicit def mapper[HF, In <: HList, Out0 <: HList](implicit mapper : FlatMapperAux[HF, In, Out0]) =
-    new FlatMapper[HF, In] {
-      type Out = Out0
-      def apply(in: In) : Out = mapper(in)
-    }
-}
-
-object FlatMapperAux {
   import Poly._
   
-  implicit def hnilFlatMapper1[HF] = new FlatMapperAux[HF, HNil, HNil] {
-    def apply(l : HNil) = HNil
-  }
+  type Aux[HF, In <: HList, Out0 <: HList] = FlatMapper[HF, In] { type Out = Out0 }
+
+  implicit def hnilFlatMapper1[HF]: Aux[HF, HNil, HNil] =
+    new FlatMapper[HF, HNil] {
+      type Out = HNil
+      def apply(l : HNil) = HNil
+    }
   
-  implicit def hlistFlatMapper1[HF <: Poly, InH, OutH <: HList, InT <: HList, OutT <: HList, Out <: HList]
+  implicit def hlistFlatMapper1[HF <: Poly, InH, OutH <: HList, InT <: HList, OutT <: HList, Out0 <: HList]
     (implicit
       hc : Pullback1Aux[HF, InH, OutH],
-      mt : FlatMapperAux[HF, InT, OutT],
-      prepend : PrependAux[OutH, OutT, Out]) =
-      new FlatMapperAux[HF, InH :: InT, Out] {
+      mt : FlatMapper.Aux[HF, InT, OutT],
+      prepend : PrependAux[OutH, OutT, Out0]
+    ): Aux[HF, InH :: InT, Out0] =
+      new FlatMapper[HF, InH :: InT] {
+        type Out = Out0
         def apply(l : InH :: InT) = prepend(hc(l.head), mt(l.tail))
       }
 }
@@ -2023,11 +2006,11 @@ trait Zip[L <: HList] {
 }
 
 object Zip {
-  implicit def zipper[L <: HList, OutT <: HList, OutM <: HList]
+  implicit def zipper[L <: HList, OutT <: HList]
     (implicit
       transposer : TransposerAux[L, OutT],
-      mapper : MapperAux[tupled.type, OutT, OutM]) = new Zip[L] {
-    type Out = OutM
+      mapper : Mapper[tupled.type, OutT]) = new Zip[L] {
+    type Out = mapper.Out
     def apply(l : L) = l.transpose map tupled
   }
 }
@@ -2045,7 +2028,7 @@ trait Unzip[L <: HList] {
 object Unzip {
   implicit def unzipper[L <: HList, OutM <: HList, OutT <: HList]
     (implicit
-      mapper : MapperAux[productElements.type, L, OutM],
+      mapper : Mapper.Aux[productElements.type, L, OutM],
       transposer : TransposerAux[OutM, OutT],
       tupler : Tupler[OutT]) = new Unzip[L] {
     type Out = tupler.Out

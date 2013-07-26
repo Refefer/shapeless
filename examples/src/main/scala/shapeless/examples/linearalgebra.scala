@@ -49,7 +49,7 @@ object LinearAlgebraExamples extends App {
       (implicit
         gen : Generic.Aux[PN, LN],
         zipper : TransposerAux[LN :: LN :: HNil, ZLN],
-        mapper : MapperAux[sum.type, ZLN, LN]) : PN => VectorOps[N, PN] =
+        mapper : Mapper.Aux[sum.type, ZLN, LN]) : PN => VectorOps[N, PN] =
           (p : PN) =>
             new VectorOps[N, PN](p) {
               def +(other : Self) : Self =
