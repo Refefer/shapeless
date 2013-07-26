@@ -1123,9 +1123,9 @@ class HListTests {
     val c1b = combine(c1a, true)
     assertEquals("pass", c1b)
     
-    implicitly[LeftFolderAux[HNil, String, combine.type, String]]
-    implicitly[LeftFolderAux[Boolean :: HNil, Int, combine.type, String]]
-    implicitly[LeftFolderAux[String :: Boolean :: HNil, Char, combine.type, String]]
+    implicitly[LeftFolder.Aux[HNil, String, combine.type, String]]
+    implicitly[LeftFolder.Aux[Boolean :: HNil, Int, combine.type, String]]
+    implicitly[LeftFolder.Aux[String :: Boolean :: HNil, Char, combine.type, String]]
 
     val tf1 = implicitly[LeftFolder[HNil, String, combine.type]]
     val tf2 = implicitly[LeftFolder[Boolean :: HNil, Int, combine.type]]

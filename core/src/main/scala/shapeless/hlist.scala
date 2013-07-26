@@ -782,33 +782,22 @@ object MapFolder {
  * 
  * @author Miles Sabin
  */
-trait LeftFolder[L <: HList, In, HF] {
-  type Out
-  def apply(l : L, in : In) : Out 
-}
-
-trait LeftFolderAux[L <: HList, In, HF, Out] {
-  def apply(l : L, in : In) : Out 
-}
+trait LeftFolder[L <: HList, In, HF] extends DepFn2[L, In]
 
 object LeftFolder {
-  implicit def leftFolder[L <: HList, In, HF, Out0](implicit folder : LeftFolderAux[L, In, HF, Out0]) =
-    new LeftFolder[L, In, HF] {
-      type Out = Out0
-      def apply(l : L, in : In) : Out = folder.apply(l, in)
-    }
-}
-
-object LeftFolderAux {
   import Poly._
   
-  implicit def hnilLeftFolderAux[In, HF] = new LeftFolderAux[HNil, In, HF, In] {
-    def apply(l : HNil, in : In) : In = in 
+  type Aux[L <: HList, In, HF, Out0] = LeftFolder[L, In, HF] { type Out = Out0 }
+
+  implicit def hnilLeftFolder[In, HF]: Aux[HNil, In , HF, In] = new LeftFolder[HNil, In, HF] {
+    type Out = In
+    def apply(l : HNil, in : In): Out = in 
   }
   
-  implicit def hlistLeftFolderAux[H, T <: HList, In, HF, OutH, Out]
-    (implicit f : Pullback2Aux[HF, In, H, OutH], ft : LeftFolderAux[T, OutH, HF, Out]) =
-      new LeftFolderAux[H :: T, In, HF, Out] {
+  implicit def hlistLeftFolder[H, T <: HList, In, HF, OutH]
+    (implicit f : Pullback2Aux[HF, In, H, OutH], ft : LeftFolder[T, OutH, HF]): Aux[H :: T, In, HF, ft.Out] =
+      new LeftFolder[H :: T, In, HF] {
+        type Out = ft.Out
         def apply(l : H :: T, in : In) : Out = ft(l.tail, f(in, l.head))
       }
 }
